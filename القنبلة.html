@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔤 احزر الكلمة من الوصف</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      direction: rtl;
+      margin: 0;
+      padding: 0;
+    }
+    h1 { margin: 20px; }
+    #hint { font-size: 20px; margin-bottom: 10px; }
+    #score { font-size: 18px; margin-bottom: 10px; color: #0f0; }
+    #wordBoxes { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+    .letter-box {
+      width: 40px;
+      height: 40px;
+      background: #333;
+      border: 2px solid #fff;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 400px;
+      margin: auto;
+      justify-content: center;
+    }
+    .key {
+      width: 40px;
+      height: 40px;
+      margin: 4px;
+      background: #444;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .key:disabled { background: #666; cursor: not-allowed; }
+    #attempts { margin: 10px; }
+    .ball {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 3px;
+      background-color: green;
+    }
+    .used { background-color: red; }
+    #nextBtn, #restartBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔤 احزر الكلمة من الوصف</h1>
+<div id="score">النقاط: 0</div>
+<div id="hint"></div>
+<div id="wordBoxes"></div>
+<div id="attempts"></div>
+<div id="keyboard"></div>
+<button id="nextBtn">➡️ السؤال التالي</button>
+<button id="restartBtn">🔁 لعبة جديدة</button>
+
+<script>
+  const levels = {
+    3: [
+      { word: "قلم", hint: "شيء نستخدمه للكتابة" },
+           { word: "كنز", hint: "شيء تجده بإستخدام الخريطة" },
+
+      { word: "باب", hint: "نفتحه للدخول والخروج" },
+      { word: "فم", hint: "نستخدمه للأكل والكلام" },
+      { word: "يد", hint: "نستخدمها للمس والإمساك" },
+      { word: "عين", hint: "نرى بها" },
+      { word: "أم", hint: "هي من أنجبتك" },
+      { word: "دم", hint: "سائل أحمر في الجسم" },
+      { word: "بيت", hint: "مكان السكن" },
+      { word: "نور", hint: "ضد الظلام" },
+      { word: "جبل", hint: "مرتفع في الأرض" },
+      { word: "نار", hint: "حارة وتحرق" },
+      { word: "سر", hint: "شيء لا يُقال" },
+      { word: "فن", hint: "نوع من الإبداع" },
+      { word: "لبن", hint: "مشروب أبيض من الحليب" },
+      { word: "حوت", hint: "أكبر كائن بحري" }
+    ],
+   4: [
+      { word: "سماء", hint: "فوقنا زرقاء" },
+      { word: "كتاب", hint: "نقرأ فيه" },
+      { word: "شمس", hint: "تضيء وتدفئ" },
+      { word: "مطر", hint: "ينزل من السحاب" },
+      { word: "بحر", hint: "ماء مالح واسع" },
+      { word: "ورق", hint: "نكتب عليه" },
+      { word: "طين", hint: "تراب مبلل" },
+      { word: "طريق", hint: "نسير عليه" },
+      { word: "لباس", hint: "ما نرتديه" },
+      { word: "قفل", hint: "نستخدمه للإغلاق" },
+      { word: "وقت", hint: "الزمن" },
+      { word: "درب", hint: "ممشى أو طريق صغير" },
+      { word: "شاي", hint: "مشروب ساخن" },
+      { word: "عود", hint: "يُستخدم للتبخير" },
+      { word: "حجر", hint: "جماد صلب" }
+    ],
+    5: [
+      { word: "مفتاح", hint: "لفتح الأقفال" },
+      { word: "مدرسة", hint: "مكان التعليم" },
+      { word: "سيارة", hint: "وسيلة نقل" },
+      { word: "نافذة", hint: "تُفتح في الجدار" },
+      { word: "جريدة", hint: "نقرأ فيها الأخبار" },
+      { word: "مطار", hint: "مكان الطائرات" },
+      { word: "مكتب", hint: "نستخدمه للعمل" },
+      { word: "جزيرة", hint: "أرض في وسط الماء" },
+      { word: "رصيف", hint: "مكان انتظار المشاة" },
+      { word: "مشروب", hint: "يُشرب بارد أو ساخن" },
+      { word: "بوابة", hint: "مدخل كبير" },
+      { word: "قصيدة", hint: "نص شعري" },
+      { word: "بركان", hint: "جبل يثور نارًا" },
+      { word: "برنامج", hint: "نستخدمه بالحاسوب" },
+      { word: "أوراق", hint: "جممع ورقة" }
+    ],
+    6: [
+      { word: "حاسوب", hint: "جهاز إلكتروني ذكي" },
+      { word: "تمثال", hint: "نحت لشخص أو شيء" },
+      { word: "مهندس", hint: "يُصمم المباني أو الأنظمة" },
+      { word: "مطبخ", hint: "مكان الطبخ" },
+      { word: "حديقة", hint: "مكان به زرع" },
+      { word: "مكتبة", hint: "مكان لحفظ الكتب" },
+      { word: "مطعم", hint: "مكان تقديم الطعام" },
+      { word: "مسجد", hint: "مكان الصلاة للمسلمين" },
+      { word: "بطاقة", hint: "تُستخدم للتعريف أو الدفع" },
+      { word: "مدينة", hint: "مكان كبير للعيش" },
+      { word: "مساعدة", hint: "تقديم العون" },
+      { word: "مشترك", hint: "يشارك الآخرين" },
+      { word: "موهبة", hint: "قدرة فطرية خاصة" },
+      { word: "مزرعة", hint: "أرض لزراعة الطعام" },
+      { word: "مشكلة", hint: "تحتاج لحل" }
+    ],
+7: [
+  { word: "مستشفى", hint: "مكان لعلاج المرضى" },
+  { word: "استعارة", hint: "أخذ شيء مؤقتًا" },
+  { word: "بطارية", hint: "مصدر طاقة كهربائية" },
+  { word: "تلسكوب", hint: "أداة لرؤية الأجسام البعيدة" },
+  { word: "انترنت", hint: "شبكة عالمية للمعلومات" },
+  { word: "ثقافة", hint: "مجموعة من المعارف والقيم" },
+  { word: "محفظة", hint: "تُستخدم لحمل النقود" },
+  { word: "منطقة", hint: "جزء من الأرض له حدود" },
+  { word: "جمهوري", hint: "يتبع نظامًا غير ملكي" },
+  { word: "تجربة", hint: "محاولة لاكتشاف شيء" },
+  { word: "مزارع", hint: "يعمل في الزراعة" },
+  { word: "مشترك", hint: "يشارك فيه أكثر من شخص" },
+  { word: "مفتوحة", hint: "غير مغلقة" },
+  { word: "فاصوليا", hint: "نوع من الخضروات" },
+  { word: "تقويم", hint: "نظام لترتيب الأيام" }
+],
+8: [
+  { word: "مكتسبة", hint: "تم الحصول عليها" },
+  { word: "اقتصادي", hint: "يتعلق بالمال والتجارة" },
+  { word: "مترجم", hint: "ينقل المعنى بين لغتين" },
+  { word: "مغناطيس", hint: "يجذب الأشياء المعدنية" },
+  { word: "تكنولوجيا", hint: "علم وفن التطبيق العملي" },
+  { word: "محاكمة", hint: "إجراء قانوني للبت بقضية" },
+  { word: "مواجهة", hint: "الوقوف أمام تحدٍّ" },
+  { word: "إستراتيجية", hint: "خطة لتحقيق هدف بعيد المدى" },
+  { word: "تساؤلات", hint: "أسئلة متعددة" },
+  { word: "مسؤولية", hint: "واجب الالتزام أو التصرف" },
+  { word: "تسويق", hint: "عملية الترويج لمنتج" },
+  { word: "مراسلة", hint: "تبادل الرسائل" },
+  { word: "ترجمة", hint: "نقل نص من لغة لأخرى" },
+  { word: "معادلة", hint: "توازن رياضي أو منطقي" },
+  { word: "مغادرة", hint: "ترك المكان أو الرحيل" }
+],
+9: [
+  { word: "استئذان", hint: "طلب السماح قبل الفعل" },
+  { word: "استفهام", hint: "طلب معرفة شيء" },
+  { word: "استعداد", hint: "جاهزية لفعل شيء" },
+  { word: "معلومات", hint: "تفاصيل ومعرفة عن شيء" },
+  { word: "مقارنة", hint: "موازنة بين شيئين" },
+  { word: "مغامرات", hint: "أحداث مشوقة وخطيرة" },
+  { word: "استقبال", hint: "استلام ضيف أو رسالة" },
+  { word: "متفوقين", hint: "حققوا نجاحًا مميزًا" },
+  { word: "المهارات", hint: "قدرات مكتسبة" },
+  { word: "التقارير", hint: "وثائق تتضمن معلومات" },
+  { word: "استثمار", hint: "تشغيل المال لتحقيق ربح" },
+  { word: "المواصلات", hint: "وسائل النقل" },
+  { word: "استجمام", hint: "راحة وتجديد نشاط" },
+  { word: "المكتبات", hint: "أماكن لحفظ واستعارة الكتب" },
+  { word: "استجابة", hint: "رد الفعل على طلب" }
+]
+
+  };
+
+   const words = levels[3];
+  let guessedLetters = [];
+  let maxAttempts = 5;
+  let wrongAttempts = 0;
+  let score = 0;
+  let currentWord = {};
+
+  const letters = "أبجدهوزحطيكلمنسعفصقرشتثخذضظغئءؤىةلا".split("");
+
+  const hintEl = document.getElementById("hint");
+  const wordBoxes = document.getElementById("wordBoxes");
+  const keyboard = document.getElementById("keyboard");
+  const attemptsEl = document.getElementById("attempts");
+  const scoreEl = document.getElementById("score");
+  const nextBtn = document.getElementById("nextBtn");
+  const restartBtn = document.getElementById("restartBtn");
+
+  function getRandomWord() {
+    return words[Math.floor(Math.random() * words.length)];
+  }
+
+  function setupWord(word) {
+    wordBoxes.innerHTML = "";
+    for (let i = 0; i < word.length; i++) {
+      const box = document.createElement("div");
+      box.className = "letter-box";
+      box.id = `box-${i}`;
+      wordBoxes.appendChild(box);
+    }
+  }
+
+  function setupAttempts() {
+    attemptsEl.innerHTML = "";
+    for (let i = 0; i < maxAttempts; i++) {
+      const ball = document.createElement("div");
+      ball.className = "ball";
+      ball.id = `ball-${i}`;
+      attemptsEl.appendChild(ball);
+    }
+  }
+
+  function setupKeyboard() {
+    keyboard.innerHTML = "";
+    letters.forEach(letter => {
+      const btn = document.createElement("button");
+      btn.className = "key";
+      btn.textContent = letter;
+      btn.onclick = () => handleGuess(letter, btn);
+      keyboard.appendChild(btn);
+    });
+  }
+
+  function handleGuess(letter, btn) {
+    btn.disabled = true;
+    const word = currentWord.word;
+    let found = false;
+
+    for (let i = 0; i < word.length; i++) {
+      if (word[i] === letter) {
+        guessedLetters[i] = letter;
+        document.getElementById(`box-${i}`).textContent = letter;
+        found = true;
+      }
+    }
+
+    if (!found) {
+      document.getElementById(`ball-${wrongAttempts}`).classList.add("used");
+      wrongAttempts++;
+      if (wrongAttempts >= maxAttempts) {
+        endGame(false);
+      }
+    } else if (guessedLetters.join("") === word) {
+      endGame(true);
+    }
+  }
+
+  function endGame(success) {
+    if (success) {
+      score++;
+      scoreEl.textContent = `النقاط: ${score}`;
+      nextBtn.style.display = "inline-block";
+    } else {
+      restartBtn.style.display = "inline-block";
+    }
+    document.querySelectorAll(".key").forEach(btn => btn.disabled = true);
+  }
+
+  function startGame() {
+    currentWord = getRandomWord();
+    guessedLetters = new Array(currentWord.word.length).fill("");
+    wrongAttempts = 0;
+    nextBtn.style.display = "none";
+    restartBtn.style.display = "none";
+    hintEl.textContent = currentWord.hint;
+    setupWord(currentWord.word);
+    setupAttempts();
+    setupKeyboard();
+  }
+
+  nextBtn.onclick = () => startGame();
+  restartBtn.onclick = () => {
+    score = 0;
+    scoreEl.textContent = "النقاط: 0";
+    startGame();
+  };
+
+  startGame();
+</script>
+</body>
+</html>
